@@ -1,0 +1,171 @@
+/* Негізгі параметрлер */
+:root {
+    --sidebar-bg: #2d44a0; /* Көк градиенттің негізі */
+    --main-bg: #f0f4f8;    /* Ашық сұр/көкшіл фон */
+    --card-bg: #ffffff;
+    --text-color: #333;
+    --accent-blue: #3b82f6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+body {
+    background-color: var(--main-bg);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar - Сол жақ мәзір */
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #3a55c5 0%, #1a2a6c 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 0 40px 40px 0; /* Оң жағын дөңгелектеу */
+}
+
+.sidebar .logo-area {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.sidebar .logo-area i {
+    font-size: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    border-radius: 20px;
+}
+
+.sidebar nav {
+    margin-top: 30px;
+    flex-grow: 1;
+}
+
+.sidebar nav ul {
+    list-style: none;
+}
+
+.sidebar nav ul li {
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 15px;
+    opacity: 0.8;
+}
+
+.sidebar nav ul li i {
+    margin-right: 15px;
+    width: 20px;
+}
+
+.sidebar nav ul li:hover, .sidebar nav ul li.active {
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+}
+
+/* Негізгі контент */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.search-bar {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 15px;
+    width: 300px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Welcome Banner */
+.welcome-card {
+    background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+    border-radius: 30px;
+    padding: 40px;
+    color: white;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.welcome-card h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+/* Finance Grid */
+.finance-section h2 {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.finance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.f-card {
+    background: white;
+    padding: 25px;
+    border-radius: 25px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+    border: 2px solid transparent;
+}
+
+.f-card.active {
+    border-color: #2d44a0;
+}
+
+.f-card h3 {
+    font-size: 24px;
+    color: #1a2a6c;
+}
+
+.f-card p {
+    color: #888;
+    margin-top: 5px;
+}
