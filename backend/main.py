@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Body
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime, timedelta
@@ -15,6 +16,8 @@ import io
 import os
 from dotenv import load_dotenv
 from openpyxl import Workbook
+import sys
+import os
 
 from database import engine, SessionLocal, get_db, Base
 from models import User, UserRole, AttendanceRecord
@@ -32,6 +35,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 webauthn_challenges = {}
 log_queues: List[asyncio.Queue] = []
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 async def _publish_log(event: dict):
@@ -51,9 +56,16 @@ async def _publish_log(event: dict):
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Smart Campus API", version="1.0.0")
+
+# CORS - Render фронтенд үшін ашық
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "*",  # Өндірісте нақты URL-мен ауыстырыңыз
+        "https://smart-campus-y14.onrender.com",
+        "http://localhost:5173",
+        "https://localhost:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -187,7 +199,7 @@ async def startup_event():
                 except Exception as _:
                     print('⚠️ Could not add student_name column to attendance_records:', _)
 
-            logs_table = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='logs'" )).fetchall()
+            logs_table = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='logs'")).fetchall()
             if not logs_table:
                 try:
                     conn.execute(text('''
@@ -642,21 +654,6 @@ def check_in_via_qr(email: Optional[str] = None):
     return HTMLResponse(content=html, status_code=200)
 
 
-async def _publish_log(event: dict):
-    # Push event to all connected SSE queues
-    remove = []
-    for q in list(log_queues):
-        try:
-            await q.put(event)
-        except Exception:
-            remove.append(q)
-    for q in remove:
-        try:
-            log_queues.remove(q)
-        except ValueError:
-            pass
-
-
 @app.post("/api/attendance/face-register", response_model=AttendanceRecordResponse)
 def face_register(payload: dict = Body(...), db: Session = Depends(get_db)):
     """Register/check-in using face image + email/password from phone client.
@@ -887,12 +884,49 @@ def health_check():
     }
 
 
+# ========== ФРОНТЕНДТІ СТАТИКАЛЫҚ ҚЫЗМЕТ КӨРСЕТУ (Render үшін) ==========
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "frontend", "dist")
+
+# Егер фронтенд build нәтижесі бар болса, статикалық файлдарды қызмет көрсету
+if os.path.exists(FRONTEND_DIST) and os.path.isdir(FRONTEND_DIST):
+    # Статикалық активтерді (CSS, JS, кескіндер) қызмет көрсету
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+    
+    # API емес барлық сұрақтарды React index.html-ге бағыттау
+    @app.get("/{full_path:path}")
+    async def serve_react_app(full_path: str):
+        # API сұрақтарын өткізіп жіберу (олар жоғарыда өңделеді)
+        if full_path.startswith("api") or full_path.startswith("docs") or full_path.startswith("openapi.json") or full_path.startswith("health"):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Нақты файл жолын тексеру
+        file_path = os.path.join(FRONTEND_DIST, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Басқа барлық жағдайда index.html қайтару (React Router үшін)
+        index_path = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+else:
+    # Фронтенд build жоқ болса, тек API жұмыс істейді
+    print("⚠️ Frontend build not found. Please run 'npm run build' in frontend directory")
+    print(f"   Expected path: {FRONTEND_DIST}")
+
+
 @app.get("/")
-def root():
+async def root_with_frontend():
+    """Түбір сұрауы - егер фронтенд болса, оны қайтарады"""
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return {
         "message": "Welcome to Smart Campus Premium API 🎓",
         "docs": "/docs",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "frontend_status": "Not built. Run 'cd frontend && npm run build'"
     }
 
 
