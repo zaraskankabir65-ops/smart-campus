@@ -17,8 +17,12 @@ def root():
 
 @app.get("/api/students")
 def get_students():
+<<<<<<< HEAD
     return []
 
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+=======
+    return []   # Уақытша бос тізім
+>>>>>>> d401fb1 (Add working backend)
