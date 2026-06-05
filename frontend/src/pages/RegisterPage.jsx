@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Scan, CheckCircle2, Smartphone, UserPlus, LogIn, Moon, Sun } from 'lucide-react';
+import { Camera, Moon, Sun } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
-// ✅ ТҮЗЕТІЛГЕН API_URL – Render бэкендін қолданады
-const API_URL = import.meta.env.VITE_API_URL || 'https://campus-api-Biiy.onrender.com';
+// Render бэкендінің нақты URL-і
+const API_URL = 'https://campus-api-8iiy.onrender.com';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ const RegisterPage = () => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // 📷 КАМЕРАНЫ ҚОСУ
   const handleStartCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -47,14 +46,13 @@ const RegisterPage = () => {
           videoRef.current.srcObject = stream;
         }
       }, 200);
-      toast.success('Камера қосылды! Жүзіңізді туралаңыз.');
+      toast.success('Камера қосылды!');
     } catch (error) {
       console.error(error);
-      toast.error('Камера ашылмады, тестілік режим қосылды.');
+      toast.error('Камера ашылмады');
     }
   };
 
-  // 📸 СУРЕТКЕ ТҮСІРУ
   const handleCaptureFace = () => {
     try {
       if (videoRef.current) {
@@ -73,16 +71,16 @@ const RegisterPage = () => {
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
+      setCameraActive(false);
     }
-    toast.success('Жүзіңіз сәтті бекітілді!');
+    toast.success('Жүзіңіз бекітілді!');
   };
 
-  // 📡 ТІРКЕЛУДІ ЖІБЕРУ
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     
     if (!capturedImage) {
-      toast.error('Өтініш, алдымен Face ID бетті бекітуден өтіңіз!');
+      toast.error('Алдымен бетіңізді бекітіңіз!');
       return;
     }
 
@@ -95,24 +93,19 @@ const RegisterPage = () => {
       avatar: capturedImage
     };
 
-    console.log('📤 Тіркелу сұрауы жіберілуде:', { fullName, email });
-
     try {
       const response = await axios.post(`${API_URL}/api/register`, newStudent);
-      console.log('✅ Тіркелу сәтті:', response.data);
-      
-      toast.success('Сәтті тіркелдіңіз! Енді кіре аласыз.');
+      console.log('Тіркелу сәтті:', response.data);
+      toast.success('Сәтті тіркелдіңіз!');
       navigate('/login');
     } catch (error) {
-      console.error('❌ Тіркелу қатесі:', error.response?.data || error.message);
+      console.error('Қате:', error.response?.data || error.message);
       const errorMsg = error.response?.data?.detail || 'Серверге қосылу мүмкін емес';
       toast.error(`Қате: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const faceSaved = !!capturedImage;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4 transition-colors duration-300">
@@ -122,82 +115,77 @@ const RegisterPage = () => {
         {darkMode ? <Sun className="text-amber-400" /> : <Moon className="text-slate-700" />}
       </button>
 
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-xl w-full max-w-md border border-slate-100 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-xl w-full max-w-md">
         <h1 className="text-3xl font-bold text-slate-800 dark:text-white text-center mb-1">Smart Campus</h1>
-        <p className="text-slate-500 text-sm text-center mb-6">Жаңа Студент ретінде тіркелу</p>
-
-        <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl mb-6">
-          <button type="button" onClick={() => navigate('/login')} className="flex-1 py-2 text-sm font-bold text-slate-500 dark:text-slate-300 rounded-lg hover:bg-white dark:hover:bg-slate-600 transition-all">➔ Кіру бетіне өту</button>
-          <button type="button" className="flex-1 py-2 text-sm font-bold bg-white dark:bg-slate-600 text-amber-500 rounded-lg shadow-sm">+ Тіркелу</button>
-        </div>
+        <p className="text-slate-500 text-sm text-center mb-6">Жаңа студент ретінде тіркелу</p>
 
         <form onSubmit={handleRegisterSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Студенттің аты-жөні</label>
+            <label className="block text-xs font-bold text-slate-500 mb-2">Аты-жөні</label>
             <input 
               type="text" 
-              placeholder="Мысалы: Жарасқан Кабір" 
               value={fullName} 
               onChange={(e) => setFullName(e.target.value)} 
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400" 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 rounded-xl" 
               required 
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Биометрия (Face ID)</label>
-            {!cameraActive ? (
-              <button type="button" onClick={handleStartCamera} className="w-full py-4 bg-white dark:bg-slate-700 border-2 border-dashed border-amber-300 rounded-xl text-amber-600 dark:text-amber-400 font-bold flex items-center justify-center gap-2">
+            <label className="block text-xs font-bold text-slate-500 mb-2">Face ID (бет бейне)</label>
+            {!cameraActive && !capturedImage && (
+              <button type="button" onClick={handleStartCamera} className="w-full py-3 bg-amber-500 text-white rounded-xl">
                 📷 Камераны қосу
               </button>
-            ) : (
-              <div className="w-full h-52 bg-slate-950 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden">
-                {!faceSaved ? (
-                  <>
-                    <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
-                    <div className="absolute w-28 h-28 border-4 border-dashed border-amber-400 rounded-full bg-black/10 pointer-events-none"></div>
-                    <button type="button" onClick={handleCaptureFace} className="absolute bottom-3 px-5 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl shadow-lg">
-                      Бетті бекіту
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-center z-10">
-                    <img src={capturedImage} alt="Face" className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-green-400 mb-2 shadow-lg" />
-                    <p className="text-green-400 text-xs font-bold bg-slate-900/80 px-3 py-1 rounded-full inline-block">✅ Бет бейнеңіз сақталды</p>
-                  </div>
-                )}
+            )}
+            {cameraActive && (
+              <div className="relative w-full h-52 bg-black rounded-xl overflow-hidden">
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+                <button type="button" onClick={handleCaptureFace} className="absolute bottom-3 left-1/2 transform -translate-x-1/2 px-5 py-2 bg-amber-500 text-white rounded-xl">
+                  Суретке түсіру
+                </button>
+              </div>
+            )}
+            {capturedImage && (
+              <div className="text-center">
+                <img src={capturedImage} alt="Face" className="w-20 h-20 rounded-full mx-auto object-cover border-2 border-green-400" />
+                <p className="text-green-500 text-xs mt-1">✅ Бет бейне сақталды</p>
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Email / Пошта</label>
+            <label className="block text-xs font-bold text-slate-500 mb-2">Email</label>
             <input 
               type="email" 
-              placeholder="zaraskankabir65@gmail.com" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400" 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 rounded-xl" 
               required 
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Пароль</label>
+            <label className="block text-xs font-bold text-slate-500 mb-2">Пароль</label>
             <input 
               type="password" 
-              placeholder="••••••••" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400" 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 rounded-xl" 
               required 
             />
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md mt-4">
-            {isSubmitting ? "⏳ Тексерілуде..." : "✅ Тіркелуді аяқтау"}
+          <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl">
+            {isSubmitting ? "Тіркелу... ⏳" : "Тіркелу ✅"}
           </button>
         </form>
+
+        <div className="text-center mt-4">
+          <button onClick={() => navigate('/login')} className="text-amber-500 text-sm">
+            ➔ Кіру бетіне өту
+          </button>
+        </div>
       </div>
     </div>
   );
